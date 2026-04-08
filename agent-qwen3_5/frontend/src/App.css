@@ -1162,6 +1162,68 @@
   overflow: hidden;
 }
 
+/* ========== Terminal Panel (tabbed wrapper) ========== */
+.terminal-panel-wrapper {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #414141;
+  background: #1e1e1e;
+  flex-shrink: 0;
+  min-height: 80px;
+  overflow: hidden;
+}
+
+.terminal-panel-tabs {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  background: #252526;
+  border-bottom: 1px solid #1e1e1e;
+  padding: 0 4px;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.terminal-panel-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #888888;
+  cursor: pointer;
+  height: 100%;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.terminal-panel-tab:hover {
+  color: #bbbbbb;
+}
+
+.terminal-panel-tab.active {
+  color: #cccccc;
+  border-bottom-color: #cccccc;
+}
+
+.terminal-panel-tab .terminal-tab-icon {
+  font-size: 10px;
+}
+
+/* Claude Code specific theme overrides */
+.claude-terminal-container {
+  border-top: none;
+}
+
+.claude-terminal-header {
+  background: #1a1a2e;
+}
+
 /* ========== Status Bar ========== */
 .status-bar {
   display: flex;

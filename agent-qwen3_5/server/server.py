@@ -35,6 +35,7 @@ import websockets
 # Configuration
 # ---------------------------------------------------------------------------
 TERMINAL_PORT = int(os.environ.get("TERMINAL_PORT", "8765"))
+CLAUDE_CODE_PORT = int(os.environ.get("CLAUDE_CODE_PORT", "8766"))
 ADB_PORT = int(os.environ.get("ADB_PORT", "8080"))
 SHELL = os.environ.get("SHELL", "/bin/bash")
 # Bind to localhost by default for security; set to 0.0.0.0 for remote access
@@ -1594,6 +1595,122 @@ async def terminal_handler(ws):
         log.info("Terminal session ended (pid=%d)", pid)
 
 # ---------------------------------------------------------------------------
+# Claude Code Terminal — WebSocket handler
+# ---------------------------------------------------------------------------
+# Path to the claude-code project relative to this server.py
+_CLAUDE_CODE_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "claude-code")
+)
+CLAUDE_CODE_CMD = os.environ.get("CLAUDE_CODE_CMD", "")
+
+
+def _resolve_claude_code_cmd():
+    """Return the command list used to launch Claude Code inside a PTY.
+
+    Priority:
+      1. CLAUDE_CODE_CMD env var  (user override, e.g. "bun run dev")
+      2. Built dist/cli.js        (if bun is available + dist exists)
+      3. bun run dev              (development mode)
+      4. Fallback message printed to the PTY
+    """
+    if CLAUDE_CODE_CMD:
+        return CLAUDE_CODE_CMD.split()
+
+    bun = shutil.which("bun")
+    dist_cli = os.path.join(_CLAUDE_CODE_DIR, "dist", "cli.js")
+
+    if bun and os.path.isfile(dist_cli):
+        return [bun, "run", dist_cli]
+
+    if bun:
+        return [bun, "run", "dev"]
+
+    # No bun — return None so the handler can print an error
+    return None
+
+
+async def claude_code_handler(ws):
+    """Handle a single Claude Code terminal WebSocket connection."""
+    cmd = _resolve_claude_code_cmd()
+    if cmd is None:
+        # Notify the client that bun is not available
+        await ws.send(json.dumps({
+            "type": "output",
+            "data": "\x1b[1;31m✗ Cannot start Claude Code: 'bun' not found in PATH.\x1b[0m\r\n"
+                    "\x1b[90mPlease install Bun (https://bun.sh) and rebuild claude-code:\x1b[0m\r\n"
+                    "\x1b[93m  cd claude-code && bun install && bun run build\x1b[0m\r\n"
+        }))
+        return
+
+    master_fd, slave_fd = pty.openpty()
+
+    pid = os.fork()
+    if pid == 0:
+        # ---- child process ----
+        os.close(master_fd)
+        os.setsid()
+        fcntl.ioctl(slave_fd, termios.TIOCSCTTY, 0)
+        os.dup2(slave_fd, 0)
+        os.dup2(slave_fd, 1)
+        os.dup2(slave_fd, 2)
+        if slave_fd > 2:
+            os.close(slave_fd)
+        os.chdir(_CLAUDE_CODE_DIR)
+        os.execvp(cmd[0], cmd)
+        # never reached
+
+    # ---- parent process ----
+    os.close(slave_fd)
+    log.info("Claude Code session started (pid=%d, cmd=%s)", pid, " ".join(cmd))
+
+    loop = asyncio.get_event_loop()
+
+    async def pty_reader():
+        """Read from PTY master fd and send to WebSocket."""
+        try:
+            while True:
+                data = await loop.run_in_executor(None, os.read, master_fd, 4096)
+                if not data:
+                    break
+                await ws.send(json.dumps({"type": "output", "data": data.decode("utf-8", errors="replace")}))
+        except (OSError, websockets.exceptions.ConnectionClosed):
+            pass
+
+    async def ws_reader():
+        """Read from WebSocket and write to PTY master fd."""
+        try:
+            async for raw in ws:
+                try:
+                    msg = json.loads(raw)
+                except (json.JSONDecodeError, TypeError):
+                    continue
+                if msg.get("type") == "input":
+                    data = msg.get("data", "")
+                    os.write(master_fd, data.encode("utf-8"))
+                elif msg.get("type") == "resize":
+                    cols = int(msg.get("cols", 80))
+                    rows = int(msg.get("rows", 24))
+                    winsize = struct.pack("HHHH", rows, cols, 0, 0)
+                    fcntl.ioctl(master_fd, termios.TIOCSWINSZ, winsize)
+        except (OSError, websockets.exceptions.ConnectionClosed):
+            pass
+
+    try:
+        await asyncio.gather(pty_reader(), ws_reader())
+    finally:
+        os.close(master_fd)
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            pass
+        log.info("Claude Code session ended (pid=%d)", pid)
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 async def main():
@@ -1609,7 +1726,11 @@ async def main():
     ws_server = await websockets.serve(terminal_handler, BIND_HOST, TERMINAL_PORT)
     log.info("Terminal WebSocket server running on ws://%s:%d", BIND_HOST, TERMINAL_PORT)
 
-    log.info("Both servers are ready. Press Ctrl+C to stop.")
+    # Start Claude Code terminal WebSocket server
+    claude_ws_server = await websockets.serve(claude_code_handler, BIND_HOST, CLAUDE_CODE_PORT)
+    log.info("Claude Code terminal WebSocket server running on ws://%s:%d", BIND_HOST, CLAUDE_CODE_PORT)
+
+    log.info("All servers are ready. Press Ctrl+C to stop.")
 
     # Keep running until interrupted
     stop = asyncio.Event()
@@ -1621,7 +1742,9 @@ async def main():
 
     log.info("Shutting down...")
     ws_server.close()
+    claude_ws_server.close()
     await ws_server.wait_closed()
+    await claude_ws_server.wait_closed()
     await adb_runner.cleanup()
 
 

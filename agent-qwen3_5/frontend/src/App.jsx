@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar';
 import MessageList from './components/MessageList';
 import MessageInput from './components/MessageInput';
 import SettingsPanel from './components/SettingsPanel';
-import Terminal from './components/Terminal';
+import TerminalPanel from './components/TerminalPanel';
 import FileExplorer from './components/FileExplorer';
 import FileEditor from './components/FileEditor';
 import ModelManager from './components/ModelManager';
@@ -1063,7 +1063,7 @@ ${textAfter}
         )}
 
         {/* Terminal Panel */}
-        <Terminal
+        <TerminalPanel
           ref={terminalRef}
           isVisible={showTerminal}
           onCwdChange={setTerminalCwd}

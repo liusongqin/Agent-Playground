@@ -19,7 +19,7 @@ source "$VENV_DIR/bin/activate"
 
 # # Install server dependencies
 # echo "[start-server] Installing server dependencies..."
-# pip install -q -r "$SERVER_DIR/requirements.txt"
+pip install -q -r "$SERVER_DIR/requirements.txt"
 
 # Start the server
 echo "[start-server] Starting Python server..."
