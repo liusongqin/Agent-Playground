@@ -10,28 +10,29 @@ const FIT_DELAY_MS = 100;
 const RECONNECT_DELAY_MS = 100;
 
 const TERMINAL_THEME = {
-  background: '#1a1a2e',
-  foreground: '#e0e0e0',
-  cursor: '#e94560',
-  cursorAccent: '#1a1a2e',
-  selectionBackground: '#3a3a5e',
-  black: '#1a1a2e',
-  red: '#e94560',
+  background: '#1e1e1e',
+  foreground: '#cccccc',
+  cursor: '#aeafad',
+  cursorAccent: '#1e1e1e',
+  selectionBackground: '#264f78',
+  black: '#1e1e1e',
+  red: '#f44747',
   green: '#6a9955',
-  yellow: '#e9b872',
-  blue: '#5089c6',
-  magenta: '#c77dba',
+  yellow: '#d7ba7d',
+  blue: '#569cd6',
+  magenta: '#c586c0',
   cyan: '#4ec9b0',
-  white: '#e0e0e0',
+  white: '#d4d4d4',
   brightBlack: '#808080',
-  brightRed: '#e94560',
+  brightRed: '#f44747',
   brightGreen: '#6a9955',
-  brightYellow: '#e9b872',
-  brightBlue: '#5089c6',
-  brightMagenta: '#c77dba',
+  brightYellow: '#d7ba7d',
+  brightBlue: '#569cd6',
+  brightMagenta: '#c586c0',
   brightCyan: '#4ec9b0',
   brightWhite: '#ffffff',
 };
+
 
 export default function ClaudeTerminal({ isVisible, style }) {
   const terminalRef = useRef(null);

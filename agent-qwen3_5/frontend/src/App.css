@@ -1218,10 +1218,18 @@
 /* Claude Code specific theme overrides */
 .claude-terminal-container {
   border-top: none;
+  border-bottom: 1px solid #1e1e1e;
 }
 
 .claude-terminal-header {
-  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  background: #252526;
+  border-bottom: 1px solid #1e1e1e;
+  padding: 0 8px;
+  flex-shrink: 0;
 }
 
 /* ========== Status Bar ========== */
