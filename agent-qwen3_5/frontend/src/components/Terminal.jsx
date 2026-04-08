@@ -284,12 +284,6 @@ export default forwardRef(function Terminal({ isVisible, onCwdChange, style }, r
       style={{ display: isVisible ? 'flex' : 'none', ...style }}
     >
       <div className="terminal-header">
-        <div className="terminal-tabs">
-          <span className="terminal-tab active">
-            <span className="terminal-tab-icon">⬛</span>
-            TERMINAL
-          </span>
-        </div>
         <div className="terminal-header-actions">
           <span className={`terminal-status ${connected ? 'connected' : 'disconnected'}`}>
             {connected ? '● Connected' : '○ Disconnected'}
