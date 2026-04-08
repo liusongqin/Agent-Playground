@@ -27,3 +27,17 @@ bun run build
 
 ### 待修复问题
 1. 终端一直在重连
+
+### 本地调用vllm
+```shell
+### 本地claude code调用vllm
+VLLM_USE_MODELSCOPE=True CUDA_VISIBLE_DEVICES=0 \
+vllm serve /home/zhenzhen/code/vllm/models/Qwen3.5-4B \
+  --gpu-memory-utilization 0.8 \
+  --served-model-name Qwen3.5-4B \
+  --trust-remote-code \
+  --tensor-parallel-size 1 \
+  --port 8000 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_coder
+```
