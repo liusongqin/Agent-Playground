@@ -20,6 +20,9 @@ export ANTHROPIC_API_KEY=YOUR_DASHSCOPE_API_KEY
 export ANTHROPIC_MODEL=Qwen3.5-4B
 
 终端code是用bun构建的
+
+cd ~/code/Agent-Playground/Agent-Playground/claude-code
+bun install
 bun run dev
 bun run build
 
