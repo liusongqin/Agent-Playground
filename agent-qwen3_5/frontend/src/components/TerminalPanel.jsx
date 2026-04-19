@@ -4,7 +4,7 @@ import ClaudeTerminal from './ClaudeTerminal';
 
 /**
  * TerminalPanel — tabbed terminal panel that hosts the original Terminal
- * and the Claude Code terminal side-by-side (via tabs).
+ * and the Agent Code terminal side-by-side (via tabs).
  *
  * Props are forwarded to the original Terminal component so that the agent
  * integration (sendCommand / capture) keeps working unchanged.
@@ -34,7 +34,7 @@ export default forwardRef(function TerminalPanel(
           onClick={() => setActiveTab('claudeCode')}
         >
           <span className="terminal-tab-icon">🤖</span>
-          CLAUDE CODE
+          Agent Code
         </button>
       </div>
 

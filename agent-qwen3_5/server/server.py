@@ -1595,17 +1595,17 @@ async def terminal_handler(ws):
         log.info("Terminal session ended (pid=%d)", pid)
 
 # ---------------------------------------------------------------------------
-# Claude Code Terminal — WebSocket handler
+# Agent Code Terminal — WebSocket handler
 # ---------------------------------------------------------------------------
-# Path to the claude-code project relative to this server.py
+# Path to the agent-code project relative to this server.py
 _CLAUDE_CODE_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "claude-code")
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "agent-code")
 )
 CLAUDE_CODE_CMD = os.environ.get("CLAUDE_CODE_CMD", "")
 
 
 def _resolve_claude_code_cmd():
-    """Return the command list used to launch Claude Code inside a PTY.
+    """Return the command list used to launch Agent Code inside a PTY.
 
     Priority:
       1. CLAUDE_CODE_CMD env var  (user override, e.g. "bun run dev")
@@ -1630,15 +1630,15 @@ def _resolve_claude_code_cmd():
 
 
 async def claude_code_handler(ws):
-    """Handle a single Claude Code terminal WebSocket connection."""
+    """Handle a single Agent Code terminal WebSocket connection."""
     cmd = _resolve_claude_code_cmd()
     if cmd is None:
         # Notify the client that bun is not available
         await ws.send(json.dumps({
             "type": "output",
-            "data": "\x1b[1;31m✗ Cannot start Claude Code: 'bun' not found in PATH.\x1b[0m\r\n"
-                    "\x1b[90mPlease install Bun (https://bun.sh) and rebuild claude-code:\x1b[0m\r\n"
-                    "\x1b[93m  cd claude-code && bun install && bun run build\x1b[0m\r\n"
+            "data": "\x1b[1;31m✗ Cannot start Agent Code: 'bun' not found in PATH.\x1b[0m\r\n"
+                    "\x1b[90mPlease install Bun (https://bun.sh) and rebuild agent-code:\x1b[0m\r\n"
+                    "\x1b[93m  cd agent-code && bun install && bun run build\x1b[0m\r\n"
         }))
         return
 
@@ -1661,7 +1661,7 @@ async def claude_code_handler(ws):
 
     # ---- parent process ----
     os.close(slave_fd)
-    log.info("Claude Code session started (pid=%d, cmd=%s)", pid, " ".join(cmd))
+    log.info("Agent Code session started (pid=%d, cmd=%s)", pid, " ".join(cmd))
 
     loop = asyncio.get_event_loop()
 
@@ -1707,7 +1707,7 @@ async def claude_code_handler(ws):
             os.waitpid(pid, os.WNOHANG)
         except ChildProcessError:
             pass
-        log.info("Claude Code session ended (pid=%d)", pid)
+        log.info("Agent Code session ended (pid=%d)", pid)
 
 
 # ---------------------------------------------------------------------------
@@ -1726,9 +1726,9 @@ async def main():
     ws_server = await websockets.serve(terminal_handler, BIND_HOST, TERMINAL_PORT)
     log.info("Terminal WebSocket server running on ws://%s:%d", BIND_HOST, TERMINAL_PORT)
 
-    # Start Claude Code terminal WebSocket server
+    # Start Agent Code terminal WebSocket server
     claude_ws_server = await websockets.serve(claude_code_handler, BIND_HOST, CLAUDE_CODE_PORT)
-    log.info("Claude Code terminal WebSocket server running on ws://%s:%d", BIND_HOST, CLAUDE_CODE_PORT)
+    log.info("Agent Code terminal WebSocket server running on ws://%s:%d", BIND_HOST, CLAUDE_CODE_PORT)
 
     log.info("All servers are ready. Press Ctrl+C to stop.")
 

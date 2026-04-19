@@ -76,7 +76,7 @@ export default function ClaudeTerminal({ isVisible, style }) {
 
       ws.onopen = () => {
         setConnected(true);
-        term.write('\x1b[1;35m✓ Connected to Claude Code terminal\x1b[0m\r\n');
+        term.write('\x1b[1;35m✓ Connected to Agent Code terminal\x1b[0m\r\n');
         // Send terminal size on connect
         const { cols, rows } = term;
         ws.send(JSON.stringify({ type: 'resize', cols, rows }));
@@ -99,9 +99,9 @@ export default function ClaudeTerminal({ isVisible, style }) {
       ws.onclose = () => {
         setConnected(false);
         if (xtermRef.current) {
-          term.write('\r\n\x1b[1;31m✗ Disconnected from Claude Code terminal\x1b[0m\r\n');
+          term.write('\r\n\x1b[1;31m✗ Disconnected from Agent Code terminal\x1b[0m\r\n');
           term.write('\x1b[90mMake sure the backend server is running and claude-code is built:\x1b[0m\r\n');
-          term.write('\x1b[93m  cd claude-code && bun install && bun run build\x1b[0m\r\n');
+          term.write('\x1b[93m  cd agent-code && bun install && bun run build\x1b[0m\r\n');
           term.write('\x1b[90mThen restart the server: cd server && python server.py\x1b[0m\r\n');
           term.write('\x1b[90mClick 🔄 to reconnect or ⚙️ to configure the server URL.\x1b[0m\r\n');
         }
@@ -112,7 +112,7 @@ export default function ClaudeTerminal({ isVisible, style }) {
       };
     } catch {
       setConnected(false);
-      term.write('\r\n\x1b[1;31m✗ Failed to connect to Claude Code terminal\x1b[0m\r\n');
+      term.write('\r\n\x1b[1;31m✗ Failed to connect to Agent Code terminal\x1b[0m\r\n');
     }
   }, []);
 
@@ -144,8 +144,8 @@ export default function ClaudeTerminal({ isVisible, style }) {
     fitAddonRef.current = fitAddon;
 
     // Welcome message
-    term.write('\x1b[1;35m=== Claude Code Terminal ===\x1b[0m\r\n');
-    term.write('\x1b[90mConnecting to Claude Code...\x1b[0m\r\n');
+    term.write('\x1b[1;35m=== Agent Code Terminal ===\x1b[0m\r\n');
+    term.write('\x1b[90mConnecting to Agent Code...\x1b[0m\r\n');
 
     // Forward all input to WebSocket
     term.onData((data) => {
@@ -255,7 +255,7 @@ export default function ClaudeTerminal({ isVisible, style }) {
       </div>
       {showConfig && (
         <div className="terminal-config">
-          <label className="terminal-config-label">Claude Code WS URL:</label>
+          <label className="terminal-config-label">Agent Code WS URL:</label>
           <input
             type="text"
             className="terminal-config-input"
