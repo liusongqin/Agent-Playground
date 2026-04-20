@@ -12,6 +12,9 @@ function getUrl(baseUrl, path) {
   return `${(baseUrl || DEFAULT_ADB_URL).replace(/\/+$/, '')}${path}`;
 }
 
+// 计算图片缩放
+let currentScale = 1.0;
+
 /**
  * Take a screenshot via ADB and return base64 image data.
  */
@@ -21,6 +24,7 @@ export async function adbScreenshot(baseUrl) {
     throw new Error(`ADB screenshot failed: HTTP ${response.status}`);
   }
   const data = await response.json();
+  currentScale = data.scale; // 保存比例
   return data.image; // base64 encoded PNG
 }
 
@@ -31,7 +35,7 @@ export async function adbClick(x, y, baseUrl) {
   const response = await fetch(getUrl(baseUrl, '/api/adb/click'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ x: Math.round(x), y: Math.round(y) }),
+    body: JSON.stringify({ x: Math.round(x), y: Math.round(y), scale: currentScale}),
   });
   if (!response.ok) {
     throw new Error(`ADB click failed: HTTP ${response.status}`);

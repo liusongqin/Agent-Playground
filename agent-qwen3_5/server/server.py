@@ -27,6 +27,9 @@ import struct
 import subprocess
 import sys
 import termios
+import base64
+from io import BytesIO
+from PIL import Image
 
 from aiohttp import web
 import websockets
@@ -128,11 +131,32 @@ async def handle_devices(request):
     except Exception as exc:
         return _error_response(str(exc), request=request)
 
+def _resize_png_bytes_if_needed(png_bytes: bytes, max_side: int = 2048) -> tuple[bytes, float]:
+    with Image.open(BytesIO(png_bytes)) as img:
+        w, h = img.size
+        # 如果不需要缩放，比例是 1.0
+        if w <= max_side and h <= max_side:
+            return png_bytes, 1.0
+
+        # 计算缩放比例
+        scale = min(max_side / w, max_side / h)
+        nw, nh = int(w * scale), int(h * scale)
+
+        resized = img.resize((nw, nh), Image.LANCZOS).convert("RGB")
+
+        out = BytesIO()
+        resized.save(out, format="JPEG", quality=85, optimize=True)
+        # 返回图片数据和比例
+        return out.getvalue(), scale
+
 async def handle_screenshot(request):
     try:
         raw = await _run_adb("exec-out", "screencap", "-p", binary=True)
-        b64 = base64.b64encode(raw).decode("ascii")
-        return _json_response({"image": b64}, request=request)
+        # 解构获取数据和比例
+        processed, scale = _resize_png_bytes_if_needed(raw, max_side=2048)
+        b64 = base64.b64encode(processed).decode("ascii")
+        # 在 JSON 中附带 scale 信息
+        return _json_response({"image": b64, "scale": scale}, request=request)
     except Exception as exc:
         return _error_response(str(exc), request=request)
 
@@ -141,7 +165,15 @@ async def handle_click(request):
         body = await request.json()
         x = int(body["x"])
         y = int(body["y"])
-        await _run_adb("shell", "input", "tap", str(x), str(y))
+        # 获取前端传来的缩放比例，默认为 1.0（防止旧前端没传）
+        scale = float(body.get("scale", 1.0))
+        
+        # 关键步骤：反向计算真实坐标
+        # 屏幕真实坐标 = 前端点击坐标 / 缩放比例
+        real_x = int(x / scale)
+        real_y = int(y / scale)
+
+        await _run_adb("shell", "input", "tap", str(real_x), str(real_y))
         return _json_response({"ok": True}, request=request)
     except Exception as exc:
         return _error_response(str(exc), request=request)
