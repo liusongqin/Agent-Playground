@@ -33,7 +33,7 @@ bun run build
 
 ### 本地调用vllm
 ```shell
-### 本地Agent Code调用vllm
+### 本地Agent Terminal调用vllm
 VLLM_USE_MODELSCOPE=True CUDA_VISIBLE_DEVICES=0 \
 vllm serve /home/zhenzhen/code/vllm/models/Qwen3.5-4B \
   --gpu-memory-utilization 0.8 \
